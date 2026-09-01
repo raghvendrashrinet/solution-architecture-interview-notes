@@ -907,155 +907,113 @@ Depth: Intermediate (15 min)
 
 Solution Options:
 
-Option 1: Import Existing Resources
+##### Option 1: Import Existing Resources
 
 ```bash
 terraform import aws_instance.example i-1234567890abcdef0
 ```
-Option 2: Remove from State (if should be destroyed)
+##### Option 2: Remove from State (if should be destroyed)
 
 ```bash
 terraform state rm aws_instance.example
 ```
-Option 3: Modify Configuration to Match Reality
+##### Option 3: Modify Configuration to Match Reality
 
 Update HCL to match actual resource properties
 
 Then terraform plan to see diff
 
-Option 4: Manual Cleanup (Last Resort)
+##### Option 4: Manual Cleanup (Last Resort)
 
 Delete the manually created resource
 
 Apply Terraform to recreate
 
 Prevention Measures:
+ - Guardrails: Use policy as code (OPA/Sentinel) to block manual changes
+ - DRY: Use Terraform workspaces for environment separation
+ - Locking: Enable state locking (DynamoDB, Azure Storage)
+ - Pipelines: Only allow changes through CI/CD
+ - Tags: Tag resources with managed-by:Terraform
+ - Drift Detection: Regular terraform plan to detect unauthorized changes
 
-Guardrails: Use policy as code (OPA/Sentinel) to block manual changes
-
-DRY: Use Terraform workspaces for environment separation
-
-Locking: Enable state locking (DynamoDB, Azure Storage)
-
-Pipelines: Only allow changes through CI/CD
-
-Tags: Tag resources with managed-by:Terraform
-
-Drift Detection: Regular terraform plan to detect unauthorized changes
-
-10.9 The Security Incident Response
+#####  10.9 The Security Incident Response
 Question: You discover a security breach—a container in production has an open port to the internet and is running a crypto-miner. Walk me through your incident response.
 
 Depth: Advanced (25-30 min)
 
 Incident Response Framework:
 
-Phase 1: Containment (Immediate)
+###### Phase 1: Containment (Immediate)
 
-Isolate the Container
+1. Isolate the Container
 
 ```bash
 kubectl label node <node> node-restriction=true
 kubectl cordon <node>
 kubectl drain <node> --ignore-daemonsets
 ```
-If isolated container, scale down replicas
+  - If isolated container, scale down replicas
+  - Kill the malicious process
 
-Kill the malicious process
+2. Preserve Evidence
+  - Copy container filesystem
+  - Capture network connections
+  - Save logs
 
-Preserve Evidence
+######  Phase 2: Investigation
 
-Copy container filesystem
+1. Entry Point Analysis
+   - How did the attacker get in?
+   - Check for exposed ports
+   - Review recent deployments
+   - Check image source—was it compromised?
 
-Capture network connections
+2. Impact Assessment
+   - What data was accessible?
+   - What was exfiltrated?
+   - Which other resources were affected?
 
-Save logs
+3. Forensic Analysis
+   - Analyze container images
+   - Check suspicious network connections
+   - Review IAM actions
+   - Check CloudTrail/Azure Activity Logs
 
-Phase 2: Investigation
+######  Phase 3: Eradication
+1. Remove Malicious Resources
+   - Delete compromised pods
+   - Revoke compromised credentials
+   - Block malicious IPs
+   - Update security groups
 
-Entry Point Analysis
+2. Patch Vulnerability
+   - Update image versions
+   - Close exposed ports
+   - Implement network policies
 
-How did the attacker get in?
+3. Notify Stakeholders
+   - Security team
+   - Legal/Compliance
+   - Affected customers (if necessary)
 
-Check for exposed ports
+######  Phase 4: Recovery & Prevention
 
-Review recent deployments
+1. Strengthen Security
+   - Enable pod security policies
+   - Implement runtime security (Falco, Twistlock)
+   - Use minimal base images
+   - Regular vulnerability scanning
 
-Check image source—was it compromised?
+2. Update Runbooks
+   - Document incident
+   - Create prevention checklists
+   - Schedule security drills
 
-Impact Assessment
-
-What data was accessible?
-
-What was exfiltrated?
-
-Which other resources were affected?
-
-Forensic Analysis
-
-Analyze container images
-
-Check suspicious network connections
-
-Review IAM actions
-
-Check CloudTrail/Azure Activity Logs
-
-Phase 3: Eradication
-
-Remove Malicious Resources
-
-Delete compromised pods
-
-Revoke compromised credentials
-
-Block malicious IPs
-
-Update security groups
-
-Patch Vulnerability
-
-Update image versions
-
-Close exposed ports
-
-Implement network policies
-
-Notify Stakeholders
-
-Security team
-
-Legal/Compliance
-
-Affected customers (if necessary)
-
-Phase 4: Recovery & Prevention
-
-Strengthen Security
-
-Enable pod security policies
-
-Implement runtime security (Falco, Twistlock)
-
-Use minimal base images
-
-Regular vulnerability scanning
-
-Update Runbooks
-
-Document incident
-
-Create prevention checklists
-
-Schedule security drills
-
-Implement Zero Trust
-
-mTLS for inter-service communication
-
-Service mesh security policies
-
-JWT-based authentication
+3. Implement Zero Trust
+   - mTLS for inter-service communication
+   - Service mesh security policies
+   - JWT-based authentication
 
 ### 10.10 The "No-Context" Problem
 Question: You're brought in as a consultant. The system has been having issues for months. No documentation. No one knows how it works. The CTO wants a diagnosis in a week. What do you do?
