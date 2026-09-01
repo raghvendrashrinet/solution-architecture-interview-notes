@@ -537,20 +537,16 @@
 | **5. Resolve & Prevent** | Fix and document | How do we prevent recurrence? What's the runbook entry? |
 
 ---
-
 ### 10.2 The Mysterious Auto-Scaling Failure
-
-**Question:** Your Kubernetes cluster in production stopped scaling during a traffic spike. The HPA (Horizontal Pod Autoscaler) shows "unable to get metrics." Walk me through your debugging process.
-
-**Depth:** Intermediate to Advanced (15-20 min)
-
-**Troubleshooting Flow:**
+* **Question:** Your Kubernetes cluster in production stopped scaling during a traffic spike. The HPA (Horizontal Pod Autoscaler) shows `"unable to get metrics"`. Walk me through your debugging process.
+* **Depth:** Intermediate to Advanced (15-20 min)
+* **Troubleshooting Flow:**
 
 **Step 1: Verify the Symptoms**
 ```bash
 kubectl get hpa -n production
 kubectl describe hpa <hpa-name>
-Look for events like "failed to get metrics" or "unable to fetch metrics"
+# Look for events like "failed to get metrics" or "unable to fetch metrics"
 ```
 Step 2: Check Metrics Server
 
@@ -573,33 +569,28 @@ curl http://localhost:8080/metrics
 Is the /metrics endpoint actually returning data?
 ```
 Step 5: Investigate Recent Changes
-
-When was the last deployment?
-
-Was there a HorizontalPodAutoscaler manifest change?
-
-Were resource requests/limits modified?
+ - When was the last deployment?
+ - Was there a HorizontalPodAutoscaler manifest change?
+ - Were resource requests/limits modified?
 
 Key Insight: The interview isn't about knowing every command—it's about having a structured, methodical approach. Always start with symptoms, check the most likely culprits (metrics pipeline), and work outward.
 
-10.3 The Database Performance Crisis
-Question: Your application's API latency has jumped from 200ms to 5+ seconds during peak hours. Database CPU is at 85%. How do you troubleshoot and resolve this?
+### 10.3 The Database Performance Crisis
+- Question: Your application's API latency has jumped from 200ms to 5+ seconds during peak hours. Database CPU is at 85%. How do you troubleshoot and resolve this?
 
-Depth: Intermediate to Advanced (20-25 min)
+ - Depth: Intermediate to Advanced (20-25 min)
 
-Troubleshooting Flow:
+ - Troubleshooting Flow:
 
-Phase 1: Immediate Investigation
+#### Phase 1: Immediate Investigation
 
-Review Slow Query Logs
+- Review Slow Query Logs  
+  Enable slow query logging if not already active
+  Look for queries with high execution time or full table scans
 
-Enable slow query logging if not already active
+- Check if a new deployment introduced inefficient queries
 
-Look for queries with high execution time or full table scans
-
-Check if a new deployment introduced inefficient queries
-
-Check Connection Pool
+- Check Connection Pool
 
 ```bash
 # Check active connections
@@ -607,7 +598,7 @@ SELECT count(*) FROM pg_stat_activity WHERE state = 'active';
 ```
 Are connections maxed out? (Could be connection leak)
 
-Monitor Lock Contention
+- Monitor Lock Contention
 
 ```sql
 SELECT blocked_locks.pid as blocked_pid,
@@ -622,7 +613,7 @@ WHERE NOT blocked_locks.granted;
 ```
 Are long-running transactions blocking others?
 
-Check Index Usage
+- Check Index Usage
 
 ```sql
 SELECT schemaname, tablename, seq_scan, seq_tup_read, 
@@ -631,31 +622,28 @@ FROM pg_stat_user_tables
 WHERE seq_scan > 0
 ORDER BY seq_scan DESC;
 ```
-High sequential scans indicate missing indexes
+- High sequential scans indicate missing indexes
+- Monitor Application Changes
+- Did a new deployment add new queries?
+- Has data volume significantly increased?
 
-Monitor Application Changes
+**Phase 2: Mitigation Strategies**
 
-Did a new deployment add new queries?
+| Priority | Action | Expected Impact |
+| :--- | :--- | :--- |
+| **Immediate** | Kill long-running, non-critical queries | Immediate relief |
+| **Short-term** | Add missing indexes on heavily scanned tables | 50-90% query speedup |
+| **Short-term** | Adjust application connection pool size | Prevents resource starvation |
+| **Medium-term** | Add read replicas for read-heavy workloads | Offloads primary database |
 
-Has data volume significantly increased?
 
-Phase 2: Mitigation Strategies
+- Was there a code change? Rollback if necessary
 
-Priority	Action	Expected Impact
-Immediate	Kill the most expensive queries	Immediate relief but temporary
-Short-term	Add missing indexes	50-90% improvement if indexes are the issue
-Short-term	Increase connection pool size	May help but masks underlying problem
-Medium-term	Implement read replicas for read-heavy workloads	Significant improvement
-Long-term	Database sharding or partitioning	Solve at scale
-Phase 3: Root Cause Analysis
+- Did data growth hit a tipping point? Implement archiving
 
-Was there a code change? Rollback if necessary
+- Was there an external factor? (e.g., increased traffic, DDoS)
 
-Did data growth hit a tipping point? Implement archiving
-
-Was there an external factor? (e.g., increased traffic, DDoS)
-
-10.4 The Network Black Hole
+### 10.4 The Network Black Hole
 Question: A web application running in Kubernetes can't reach an external database. The pod logs show "connection timeout." Describe your network troubleshooting approach.
 
 Depth: Intermediate (15 min)
@@ -716,7 +704,7 @@ kubectl get serviceentry -n <namespace>
 ```
 External services need explicit definitions in service mesh
 
-10.5 The 503 Service Unavailable Epidemic
+### 10.5 The 503 Service Unavailable Epidemic
 Question: Your microservices are returning 503 errors sporadically. No recent code changes. The API gateway shows 5-10% of requests failing. How would you troubleshoot?
 
 Depth: Intermediate (15 min)
@@ -778,7 +766,7 @@ Are NetworkPolicies blocking traffic from the load balancer to pods?
 
 Key Insight: The 503 often points to health check failures or circuit breakers. Always start there before looking at application code.
 
-10.6 The Cascading Failure
+### 10.6 The Cascading Failure
 Question: Service A calls Service B, which calls Service C. Service C starts failing. How does this cascade? What patterns exist to prevent it?
 
 Depth: Advanced (15-20 min)
@@ -822,7 +810,7 @@ public Response fallback(Request req, Throwable t) {
     // Return cached or default response
 }
 ```
-10.7 The Data Inconsistency Nightmare
+### 10.7 The Data Inconsistency Nightmare
 Question: An order processing system shows inconsistencies: some orders show as "paid" in the order service but "pending" in the payment service. How do you debug and fix this?
 
 Depth: Advanced (20-25 min)
@@ -912,7 +900,7 @@ Order Saga:
      → Success: Done
      → Failure: Log and alert
 ```
-10.8 The Terraform State Disaster
+### 10.8 The Terraform State Disaster
 Question: Someone manually created resources in the cloud that Terraform was managing. Now terraform apply fails with "resource already exists." How do you resolve this?
 
 Depth: Intermediate (15 min)
@@ -1069,7 +1057,7 @@ Service mesh security policies
 
 JWT-based authentication
 
-10.10 The "No-Context" Problem
+### 10.10 The "No-Context" Problem
 Question: You're brought in as a consultant. The system has been having issues for months. No documentation. No one knows how it works. The CTO wants a diagnosis in a week. What do you do?
 
 Depth: Advanced/Senior (25-30 min)
@@ -1263,16 +1251,17 @@ When faced with any scenario question, use this template:
 
 6. "What are your thoughts on this approach? Would you like me to go deeper into any area?"
 ```
-12.4 Universal Troubleshooting Questions
+#### 12.4 Universal Troubleshooting Questions
 Before diving into any specific technology, always ask these 5 questions:
 
 #	Question	Why It Matters
-1	What changed?	Most problems are caused by recent changes
-2	When did it start?	Correlates with deployments, traffic changes
-3	What's the impact?	Prioritizes the fix (customers, revenue, safety)
-4	Can I reproduce it?	If yes, easier to test fixes
-5	Is there a runbook?	Might be a known issue with documented fix
-12.5 Troubleshooting by Component Type
+1.	What changed?	Most problems are caused by recent changes
+2.	When did it start?	Correlates with deployments, traffic changes
+3.	What's the impact?	Prioritizes the fix (customers, revenue, safety)
+4.	Can I reproduce it?	If yes, easier to test fixes
+5.	Is there a runbook?	Might be a known issue with documented fix
+
+#### 12.5 Troubleshooting by Component Type
 Component	First 3 Things to Check
 Database	Slow queries, connection pool, disk I/O
 Application	Resource limits, logs, health check endpoint
