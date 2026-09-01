@@ -664,7 +664,7 @@ nslookup database.internal.com
 curl -v telnet://database.internal.com:5432
 ```
 # Check routing   
-`ip route`
+`ip route`  
 2. Network Policies
 
 ```bash
@@ -1144,57 +1144,60 @@ Observability improvements
 
 Key Insight: Senior-level troubleshooting is as much about people and process as it is about technical skills. A systematic, documented approach builds trust with stakeholders.
 
-Chapter 11: The Architect's Mindset - How to Approach Any Question
-11.1 Interview Evaluation Axes
+### Chapter 11: The Architect's Mindset - How to Approach Any Question
+##### 11.1 Interview Evaluation Axes
 Interviewers evaluate candidates on three axes that shift with seniority:
+| **Axis**       | **Mid-Level (3–5 years)**                                   | **Senior+ (5–10+ years)**                                      |
+|----------------|--------------------------------------------------------------|----------------------------------------------------------------|
+| **Breadth**    | Must cover all major components of a system design.          | Is assumed; can cover basics quickly.                          |
+| **Depth**      | Go deep on at least one interesting component.               | Drive the deep dive proactively, focusing on trade-offs/issues.|
+| **Proactiveness** | Needs some prompting to explore details.                  | Leads the conversation and shapes the design direction.        |
 
-Axis	Mid-Level (3-5 years)	Senior+ (5-10+ years)
-Breadth	Must cover all major components of a system design.	Is assumed; you can cover the basics quickly.
-Depth	Go deep on at least one interesting component.	Drive the deep dive proactively, focusing on trade-offs and complex issues.
-Proactiveness	Needs some prompting to explore details.	Leads the entire conversation and shapes the design direction.
-11.2 The 6-Step System Design Framework
+##### 11.2 The 6-Step System Design Framework
 Use this structured approach for every design question:
 
-Clarify Requirements (5 min): Never start designing immediately. Ask questions to scope the problem. Who are the users? What are the functional and non-functional requirements?
+1. Clarify Requirements (5 min): Never start designing immediately. Ask questions to scope the problem. Who are the users? What are the functional and non-functional requirements?
 
-Capacity Estimation (5 min): Do back-of-the-envelope calculations. Estimate traffic (queries per second), storage, and bandwidth. This grounds your design in reality.
+2. Capacity Estimation (5 min): Do back-of-the-envelope calculations. Estimate traffic (queries per second), storage, and bandwidth. This grounds your design in reality.
 
-High-Level Design (10 min): Draw a simple diagram. Client → Load Balancer → App Servers → Caches → Databases. Walk through the "happy path" for the primary use case.
+3. High-Level Design (10 min): Draw a simple diagram. Client → Load Balancer → App Servers → Caches → Databases. Walk through the "happy path" for the primary use case.
 
-Deep Dive (15 min): Pick one or two of the most complex or interesting components. This is where you demonstrate senior-level depth.
+4. Deep Dive (15 min): Pick one or two of the most complex or interesting components. This is where you demonstrate senior-level depth.
 
-Scaling & Edge Cases (5 min): Discuss how the system behaves under load and how it recovers from failures.
+5. Scaling & Edge Cases (5 min): Discuss how the system behaves under load and how it recovers from failures.
 
-Summary & Trade-offs (2 min): Conclude by naming your key architectural choices and explaining the trade-offs you made.
+6. Summary & Trade-offs (2 min): Conclude by naming your key architectural choices and explaining the trade-offs you made.
 
-11.3 Key Principles for Answering Any Question
-Principle	Why It's Critical
-Think Aloud	Shows your process, not just answer
-Never Guess	Say "I'd check X" instead of guessing
-Business Context	Frame decisions in business terms
-Collaborative	Ask for input, acknowledge trade-offs
-Learn from Failure	Stories of learning are valued
-Systematic	Structure to show senior-level thinking
+##### 11.3 Key Principles for Answering Any Question
+| **Principle**       | **Why It's Critical**                                      |
+|----------------------|------------------------------------------------------------|
+| **Think Aloud**      | Shows your process, not just the final answer.             |
+| **Never Guess**      | Better to say "I'd check X" than to guess incorrectly.     |
+| **Business Context** | Frames decisions in terms of business impact and outcomes. |
+| **Collaborative**    | Demonstrates teamwork by asking for input and noting trade-offs. |
+| **Learn from Failure** | Stories of learning and growth are valued in interviews. |
+| **Systematic**       | A structured approach signals senior-level thinking.       |
+
 "It Depends" is Never a Complete Answer
 
 Never just say "it depends." Always complete the sentence. For example: "It depends on the read-to-write ratio. If reads dominate, I would use a read-replica. If writes dominate, I would use a sharded database to distribute the load."
 
 Signpost Your Thinking
 
-"I'm going to start by clarifying the requirements..."
+- "I'm going to start by clarifying the requirements..."
 
-"Now, I'll move on to capacity estimation..."
+- "Now, I'll move on to capacity estimation..."
 
-"I have finished the high-level design. Before I go deeper on the data model, does this approach seem reasonable?"
+- "I have finished the high-level design. Before I go deeper on the data model, does this approach seem reasonable?"
 
 Focus on "Business Alignment"
 
-Instead of: "We'll use serverless because it auto-scales."
+- Instead of: "We'll use serverless because it auto-scales."
 
-Say: "We'll use serverless to ensure we can scale quickly during our Black Friday sales spike, while also reducing costs during low-traffic periods by avoiding idle server capacity."
+- Say: "We'll use serverless to ensure we can scale quickly during our Black Friday sales spike, while also reducing costs during low-traffic periods by avoiding idle server capacity."
 
-Chapter 12: Final Preparation Checklist
-12.1 Core Technical Pillars to Master
+### Chapter 12: Final Preparation Checklist
+##### 12.1 Core Technical Pillars to Master
 - Compute: VMs, Containers (Kubernetes), Serverless (Functions)
 
 - Storage: Relational DB (SQL), NoSQL (Document, Key-Value), Object Storage (S3)
@@ -1211,7 +1214,7 @@ Chapter 12: Final Preparation Checklist
 
 - Observability: Prometheus, Grafana, ELK, OpenTelemetry
 
-12.2 The Day Before Interview Checklist
+#####  12.2 The Day Before Interview Checklist
 Technical Review:
 
 □ Review the company's tech stack (from job description)
@@ -1225,7 +1228,7 @@ Mental Preparation:
 □ Review behavioral examples using STAR
 □ Practice explaining complex concepts simply
 □ Know your "failure story" (what went wrong and what you learned)
-12.3 Your "Go-To" Response Structure
+##### 12.3 Your "Go-To" Response Structure
 When faced with any scenario question, use this template:
 
 ```text
@@ -1262,26 +1265,28 @@ Before diving into any specific technology, always ask these 5 questions:
 5.	Is there a runbook?	Might be a known issue with documented fix
 
 #### 12.5 Troubleshooting by Component Type
-Component	First 3 Things to Check
-Database	Slow queries, connection pool, disk I/O
-Application	Resource limits, logs, health check endpoint
-Network	DNS resolution, security groups/NACLs, routing
-Kubernetes	Events, pod status, resource constraints
-CI/CD Pipeline	Credentials, permissions, artifact availability
-Cloud Infrastructure	Quotas, IAM permissions, network connectivity
-Message Queue	Consumer lag, dead-letter queue, network connectivity
-Conclusion: The Architect's Edge
+| **Component**          | **First 3 Things to Check**                                      |
+|-------------------------|------------------------------------------------------------------|
+| **Database**            | Slow queries, connection pool, disk I/O                         |
+| **Application**         | Resource limits, logs, health check endpoint                    |
+| **Network**             | DNS resolution, security groups/NACLs, routing                  |
+| **Kubernetes**          | Events, pod status, resource constraints                        |
+| **CI/CD Pipeline**      | Credentials, permissions, artifact availability                 |
+| **Cloud Infrastructure**| Quotas, IAM permissions, network connectivity                   |
+| **Message Queue**       | Consumer lag, dead-letter queue, network connectivity           |
+
+##### Conclusion: The Architect's Edge
 The difference between a good and great solution architect or DevOps engineer is not technical knowledge alone. It's the ability to:
 
-Think systematically — having a framework for every problem
+1. Think systematically — having a framework for every problem
 
-Communicate clearly — explaining complex ideas simply
+2. Communicate clearly — explaining complex ideas simply
 
-Consider business impact — making decisions that balance trade-offs
+3. Consider business impact — making decisions that balance trade-offs
 
-Learn continuously — adapting to new challenges
+4. Learn continuously — adapting to new challenges
 
-Build resilience — designing systems that survive failure
+5. Build resilience — designing systems that survive failure
 
 This handbook is your companion. Internalize the frameworks. Practice the thinking. And remember: in interviews, they're not testing your memory—they're testing your mind.
 
