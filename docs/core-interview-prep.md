@@ -655,15 +655,15 @@ Debugging Steps:
 ```bash
 kubectl exec -it <pod-name> -- /bin/sh
 ```
-# Check if DNS resolves
+#### Check if DNS resolves
 ```
 nslookup database.internal.com
 ```
-# Check network connectivity
+#### Check network connectivity
 ```
 curl -v telnet://database.internal.com:5432
 ```
-# Check routing   
+#### Check routing   
 `ip route`  
 2. Network Policies
 
@@ -671,11 +671,11 @@ curl -v telnet://database.internal.com:5432
 kubectl get networkpolicies -n <namespace>
 kubectl describe networkpolicy <policy-name>
 ```
-Has a NetworkPolicy been added that blocks egress?
+  Has a NetworkPolicy been added that blocks egress?
 
 3. Service Mesh (if applicable)
 
-Check Envoy sidecar proxy logs
+  Check Envoy sidecar proxy logs
 
 ```bash
 kubectl logs <pod-name> -c istio-proxy
@@ -684,25 +684,25 @@ Look for "connection refused" or "503" errors
 
 4. External Firewall/Security Groups
 
-Has the database security group changed?
+  Has the database security group changed?
 
-Are the pod IP ranges allowed in the security group?
+  Are the pod IP ranges allowed in the security group?
 
 5. DNS Resolution
 
 ```bash
 kubectl exec -it <pod-name> -- cat /etc/resolv.conf
 ```
-Is the correct nameserver configured?
+  Is the correct nameserver configured?
 
-Does the domain resolve from inside the cluster?
+  Does the domain resolve from inside the cluster?
 
 6. Check Service Entries (Istio/Consul)
 
 ```bash
 kubectl get serviceentry -n <namespace>
 ```
-External services need explicit definitions in service mesh
+  External services need explicit definitions in service mesh
 
 ### 10.5 The 503 Service Unavailable Epidemic
 Question: Your microservices are returning 503 errors sporadically. No recent code changes. The API gateway shows 5-10% of requests failing. How would you troubleshoot?
@@ -712,27 +712,21 @@ Depth: Intermediate (15 min)
 Debugging Flow:
 
 1. Identify the Pattern
-
-Is it time-based? (Specific hours of day?)
-
-Is it user-based? (Certain geographies?)
-
-Is it transaction-specific? (Large payloads?)
+  - Is it time-based? (Specific hours of day?)
+  - Is it user-based? (Certain geographies?)
+  - Is it transaction-specific? (Large payloads?)
 
 2. Check Health Checks
 
 ```bash
 kubectl describe pod <pod-name>
 ```
-Are liveness/readiness probes failing?
-
-Is the health check endpoint taking too long?
-
-Is there a dependency (like DB) that's slow?
+  - Are liveness/readiness probes failing?
+  - Is the health check endpoint taking too long?
+  - Is there a dependency (like DB) that's slow?
 
 3. Examine Circuit Breakers (Resilience4j, Hystrix)
-
-Has a circuit breaker tripped for a downstream service?
+  - Has a circuit breaker tripped for a downstream service?
 
 ```bash
 # For Istio circuit breakers
@@ -740,21 +734,17 @@ kubectl get destinationrules -n <namespace>
 kubectl describe destinationrule <dr-name>
 ```
 4. Check Load Balancer Health
-
-Are pods being taken out of service?
-
-Is the load balancer failing health checks?
-
-Network ACLs blocking health check traffic?
+  - Are pods being taken out of service?
+  - Is the load balancer failing health checks?
+  - Network ACLs blocking health check traffic?
 
 5. Resource Constraints
 
 ```bash
 kubectl top pods -n <namespace>
 ```
-Are pods exceeding CPU/memory limits?
-
-Is the pod getting OOMKilled?
+  - Are pods exceeding CPU/memory limits?
+  - Is the pod getting OOMKilled?
 
 6. Check Service Mesh Envoy/Proxy Logs
 
@@ -762,9 +752,9 @@ Look for "connection overflow" or "max connections" reached
 
 7. Validate Network Policies
 
-Are NetworkPolicies blocking traffic from the load balancer to pods?
+  Are NetworkPolicies blocking traffic from the load balancer to pods?
 
-Key Insight: The 503 often points to health check failures or circuit breakers. Always start there before looking at application code.
+  Key Insight: The 503 often points to health check failures or circuit breakers. Always start there before looking at application code.
 
 ### 10.6 The Cascading Failure
 Question: Service A calls Service B, which calls Service C. Service C starts failing. How does this cascade? What patterns exist to prevent it?
@@ -775,28 +765,28 @@ Answer Framework:
 
 Cascade Mechanics:
 
-Service C fails → Service B times out waiting
+  1. Service C fails → Service B times out waiting
 
-Service B's thread pool fills up with waiting threads
+  2. Service B's thread pool fills up with waiting threads
 
-Service B's health checks start failing due to resource exhaustion
+  3. Service B's health checks start failing due to resource exhaustion
 
-Load balancer starts removing Service B instances
+  4. Load balancer starts removing Service B instances
 
-Service A loses healthy Service B instances
+  5. Service A loses healthy Service B instances
 
-Full system failure
+  6. Full system failure
 
 Prevention Patterns:
 
-Pattern	Implementation	How It Helps
-Timeouts	Set appropriate read/write timeouts	Prevents thread exhaustion
-Retries with Backoff	Exponential backoff + jitter	Prevents thundering herd
-Circuit Breaker	Open circuit after failure threshold	Prevents calls to failing service
-Bulkheads	Separate thread pools per service	Isolates failure to one service
-Rate Limiting	Limit requests per second	Prevents overload
-Fallback	Return cached/default response	Graceful degradation
-Example Implementation:
+| **Pattern**            | **Implementation**                        | **How It Helps**                          |
+|-------------------------|-------------------------------------------|-------------------------------------------|
+| **Timeouts**            | Set appropriate read/write timeouts       | Prevents thread exhaustion                 |
+| **Retries with Backoff**| Exponential backoff + jitter              | Prevents thundering herd                   |
+| **Circuit Breaker**     | Open circuit after failure threshold      | Prevents calls to failing service          |
+| **Bulkheads**           | Separate thread pools per service         | Isolates failure to one service            |
+| **Rate Limiting**       | Limit requests per second                 | Prevents overload                          |
+| **Fallback**            | Return cached/default response            | Enables graceful degradation               |
 
 ```java
 // Using Resilience4j
@@ -817,73 +807,50 @@ Depth: Advanced (20-25 min)
 
 Answer Framework:
 
-Phase 1: Investigate
+##### Phase 1: Investigate
 
-Check Transaction Logs
+1. Check Transaction Logs
 
-Were there any partial failures?
+  - Were there any partial failures?
+  - Check if distributed transactions were properly handled
 
-Check if distributed transactions were properly handled
+2. Examine Event Processing
 
-Examine Event Processing
+  - Are events being missed or duplicated?
+  - Check Kafka/queue offsets
+  - Look for processing failures
 
-Are events being missed or duplicated?
+3. Validate Idempotency
+  - Are operations idempotent?
+  - Could duplicate events cause issues?
 
-Check Kafka/queue offsets
+4. Check Consistency Model
+  - Is it eventual consistency or strong consistency?
+  - What's the expected propagation time?
 
-Look for processing failures
+##### Phase 2: Common Causes
 
-Validate Idempotency
+  - Saga failure without proper compensation
+  - Event ordering issues (out-of-order processing)
+  - Network failure between services
+  - Bug in compensation logic
+  - Inconsistent retry policies
 
-Are operations idempotent?
+##### Phase 3: Fix and Prevent
 
-Could duplicate events cause issues?
-
-Check Consistency Model
-
-Is it eventual consistency or strong consistency?
-
-What's the expected propagation time?
-
-Phase 2: Common Causes
-
-Saga failure without proper compensation
-
-Event ordering issues (out-of-order processing)
-
-Network failure between services
-
-Bug in compensation logic
-
-Inconsistent retry policies
-
-Phase 3: Fix and Prevent
-
-Reconcile state (manual or automated)
-
-Implement proper SAGA pattern:
-
-Choreography-based Saga (events)
-
-Orchestration-based Saga (centralized orchestrator)
-
-Use Outbox Pattern:
-
-Write events to DB along with transaction
-
-Separate process publishes events
-
-Implement idempotency keys:
-
-Unique request ID per operation
-
-Store processed IDs to prevent duplicates
-
-Add reconciliation jobs:
-
-Scheduled process to check inconsistencies
-
-Alert on discrepancies
+1. Reconcile state (manual or automated)
+2. Implement proper SAGA pattern:
+  - Choreography-based Saga (events)
+  - Orchestration-based Saga (centralized orchestrator)
+3. Use Outbox Pattern:
+  - Write events to DB along with transaction
+  - Separate process publishes events
+4. Implement idempotency keys:
+  - Unique request ID per operation
+  - Store processed IDs to prevent duplicates
+5. Add reconciliation jobs:
+  - Scheduled process to check inconsistencies
+  - Alert on discrepancies
 
 SAGA Orchestration Example:
 
@@ -1026,79 +993,55 @@ Week 1: The Investigation Strategy
 
 Day 1-2: Discovery & People
 
-Key Personnel: Find the people who've been there longest
-
-What works? Ask about recent successes, not just failures
-
-Runbooks: Check if any exist (even outdated ones)
-
-On-call logs: Review incident history
-
-Observability: What monitoring exists? Is it being used?
+  - Key Personnel: Find the people who've been there longest
+  - What works? Ask about recent successes, not just failures
+  - Runbooks: Check if any exist (even outdated ones)
+  - On-call logs: Review incident history
+  - Observability: What monitoring exists? Is it being used?
 
 Day 3-4: Technical Investigation
 
-Architecture Diagram (Reverse Engineer)
+ 1. Architecture Diagram (Reverse Engineer)
 
 ```text
 Client → WAF → ALB → EKS → Services → RDS
 Use kubectl get all --all-namespaces
 ```
-Use AWS/Azure resource explorer
+ - Use AWS/Azure resource explorer
+ - Check service mesh configuration
 
-Check service mesh configuration
+2. Data Flow Mapping
+  - Trace a request from start to finish
+  - Identify dependencies
+  - Document APIs and their contracts
 
-Data Flow Mapping
-
-Trace a request from start to finish
-
-Identify dependencies
-
-Document APIs and their contracts
-
-Check Observability
-
-Is Prometheus collecting metrics?
-
-Are logs searchable?
-
-Can I correlate logs to traces?
+3. Check Observability
+  - Is Prometheus collecting metrics?
+  - Are logs searchable?
+  - Can I correlate logs to traces?
 
 Day 5-6: Root Cause Identification
 
-Analyze Patterns
+1. Analyze Patterns
+  - When do failures occur? (Time, traffic, specific features)
+  - What's the impact? (Customers, revenue, SLA)
+  - What's the failure mode? (Timeout, 503, data inconsistency)
 
-When do failures occur? (Time, traffic, specific features)
-
-What's the impact? (Customers, revenue, SLA)
-
-What's the failure mode? (Timeout, 503, data inconsistency)
-
-Run Hypothesis Tests
-
-Is it a resource problem? (Scale up, see if improves)
-
-Is it a code problem? (Canary deploy previous version)
-
-Is it a configuration problem? (Check recent changes)
+2. Run Hypothesis Tests
+  - Is it a resource problem? (Scale up, see if improves)
+  - Is it a code problem? (Canary deploy previous version)
+  - Is it a configuration problem? (Check recent changes)
 
 Day 7: Report & Recommendations
 
 Deliverable:
-
-Architecture diagram and tech stack overview
-
-Key risks identified
-
-Immediate critical fixes (next 24h)
-
-Short-term improvements (next 2 weeks)
-
-Long-term architectural changes (3-6 months)
-
-Documentation gaps to fill
-
-Observability improvements
+  - Architecture diagram and tech stack overview
+  - Key risks identified
+  - Immediate critical fixes (next 24h)
+  - Short-term improvements (next 2 weeks)
+  - Long-term architectural changes (3-6 months)
+  - Documentation gaps to fill
+  - Observability improvements
 
 Key Insight: Senior-level troubleshooting is as much about people and process as it is about technical skills. A systematic, documented approach builds trust with stakeholders.
 
