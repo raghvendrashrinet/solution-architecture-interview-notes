@@ -245,6 +245,19 @@
 
 **Key Components:** OIDC issuer URL, JWT token, IAM trust policy with `sts:AssumeRoleWithWebIdentity`
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Pod as AKS Pod
+    participant AAD as Azure AD (OIDC)
+    participant AWS as AWS IAM
+
+    Pod->>AAD: Request JWT Token (Workload Identity)
+    AAD-->>Pod: Return Signed OIDC JWT
+    Pod->>AWS: AssumeRoleWithWebIdentity (JWT)
+    AWS->>AAD: Validate OIDC Token & Signature
+    AWS-->>Pod: Return Temporary AWS Credentials
+```
 ---
 
 ## Chapter 5: Complex System Design & Trade-offs
@@ -261,7 +274,29 @@
 - For US users (A and B): Minimize write latency by ensuring their region participates in quorum
 - **Strategy:** Place 2 replicas in US (A and B), 1 in C; local writes complete with 20ms cross-US latency
 - Trade-off: writes in C experience 200ms+ latency but consistency is maintained
+```
+               +-----------------------+
+               |     Global Router     |
+               +-----------+-----------+
+                           |
+            +--------------+--------------+
+            | (20ms Latency)              | (200ms Latency)
+            v                             v
+  +-------------------+        +-------------------+
+  |  US-East (Node A) | <----> |  US-West (Node B) |
+  |     [Replica]     |  20ms  |     [Replica]     |
+  +---------+---------+        +-------------------+
+            \                            /
+             \ (200ms)                  / (220ms)
+              v                        v
+            +----------------------------+
+            |      EU-Central (Node C)   |
+            |          [Replica]         |
+            +----------------------------+
 
+  Quorum Requirement: Majority = 2 / 3 Replicas
+  Fast Writes (Nodes A + B): Completed in ~20ms
+```
 ---
 
 ### 5.2 Conflict Resolution for Distributed JSON Documents
